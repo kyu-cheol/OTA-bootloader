@@ -9,7 +9,7 @@ OBJS_BL=startup_bl.o main_bl.o interrupt_bl.o system.o systick.o uart.o
 LSCRIPT_APP=app.ld
 LSCRIPT_BL=bootloader.ld
 
-CFLAGS=-mcpu=cortex-m4 -mthumb -g -ggdb -Wall -Wno-main -Wstack-usage=200 -ffreestanding -Wno-main -nostdlib
+CFLAGS=-mcpu=cortex-m4 -mthumb -g -ggdb -Wall -Wno-main -Wstack-usage=200 -ffreestanding -Wno-main -nostdlib -I include
 LDFLAGS=-Wl,-gc-sections -mcpu=cortex-m4 -mthumb -nostartfiles
 
 all: image.bin
