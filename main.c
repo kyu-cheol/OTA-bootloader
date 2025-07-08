@@ -26,13 +26,6 @@ void main(void) {
 	timer_start_IT(4200 - 1, 10000 - 1);	// 0.5s timer
 
 	while(1) {
-		/*		
-		if (get_button_state()) {
-			led_on();
-		} else {
-			led_off();
-		}
-		*/
 		if (timer_flag) {
 			timer_flag = 0;
 
