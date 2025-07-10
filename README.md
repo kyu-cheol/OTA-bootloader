@@ -1,3 +1,9 @@
+주요한 핵심기능은 아래 소스파일 순서대로 동작합니다.  
+1. startup_bl.c (부트로더의 reset handler)  
+2. main_bl.c (부트로더의 main)  
+3. startup.c (App의 reset handler)  
+4. main.c (App의 main)  
+
 <img width="100%" src="https://github.com/user-attachments/assets/1deb4d9b-426e-4e01-a597-699302af5c49" />
 <img width="100%" src="https://github.com/user-attachments/assets/35ad9257-4ba2-4340-966f-cdcb403fb951" />
 <img width="100%" src="https://github.com/user-attachments/assets/80850b31-922e-4137-ba9d-7c7974b9d23f" />
