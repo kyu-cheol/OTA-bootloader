@@ -19,11 +19,6 @@ extern void main(void);
 void isr_reset(void) {
     register unsigned int *src, *dst;
 
-    // 0x00000000 0x08000000
-    //asm volatile("cpsid i");
-    //VTOR = (uint32_t)0x08000000;
-    //asm volatile("cpsie i");
-
     /* Copy the .data section from flash to RAM. */
     src = (unsigned int *) &_stored_data;
     dst = (unsigned int *) &_start_data;

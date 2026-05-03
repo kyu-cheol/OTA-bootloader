@@ -26,16 +26,19 @@ void main(void) {
 	timer_start_IT(4200 - 1, 10000 - 1);	// 0.5s timer
 
 	while(1) {
-		if (timer_flag) {
-			timer_flag = 0;
+		// if (timer_flag) {
+		// 	timer_flag = 0;
 
-			led_toggle();
-		}
+		// 	led_toggle();
+		// }
 
 		if (button_flag) {
 			button_flag = 0;
 		
 			SoftwareReset();	
 		}
+
+		led_toggle();
+		Delay(2000);
 	}
 }

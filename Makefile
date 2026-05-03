@@ -1,33 +1,47 @@
-CROSS_COMPILE=arm-none-eabi-
-CC=$(CROSS_COMPILE)gcc
-LD=$(CROSS_COMPILE)gcc
-OBJCOPY=$(CROSS_COMPILE)objcopy
+# 빌드 도구 설정
+CROSS_COMPILE = arm-none-eabi-
+CC = $(CROSS_COMPILE)gcc
+OBJCOPY = $(CROSS_COMPILE)objcopy
 
-OBJS_APP=startup.o main.o interrupt_app.o system.o systick.o timer.o led.o uart.o button.o
-OBJS_BL=startup_bl.o main_bl.o interrupt_bl.o system.o systick.o uart.o
+# 디렉토리 설정
+BUILD_DIR = build
+COMMON_DIR = common
+APP_DIR = app
+BL_DIR = bootloader
 
-LSCRIPT_APP=app.ld
-LSCRIPT_BL=bootloader.ld
+# 컴파일 및 링크 플래그 (통합 사용)
+CFLAGS = -mcpu=cortex-m4 -mthumb -g -ggdb -Wall -Wno-main -Wstack-usage=200 -ffreestanding -nostdlib
+CFLAGS += -I$(COMMON_DIR)/inc -I$(APP_DIR)/inc -I$(BL_DIR)/inc
+LDFLAGS = -Wl,-gc-sections -mcpu=cortex-m4 -mthumb -nostartfiles
 
-CFLAGS=-mcpu=cortex-m4 -mthumb -g -ggdb -Wall -Wno-main -Wstack-usage=200 -ffreestanding -Wno-main -nostdlib -I include
-LDFLAGS=-Wl,-gc-sections -mcpu=cortex-m4 -mthumb -nostartfiles
+# 파일 목록 자동 생성
+SRCS_COMMON = $(wildcard $(COMMON_DIR)/src/*.c)
+SRCS_APP = $(wildcard $(APP_DIR)/src/*.c)
+SRCS_BL = $(wildcard $(BL_DIR)/src/*.c)
 
-all: image.bin
+# 빌드 타겟
+all: $(BUILD_DIR)/image.bin
+	cp $^ /mnt/c/wsl2\ workspace/image.bin
 
-image.bin: app.bin bootloader.bin
-	cat bootloader.bin app.bin > image.bin
+$(BUILD_DIR)/image.bin: $(BUILD_DIR)/app.bin $(BUILD_DIR)/bootloader.bin
+	cat $(BUILD_DIR)/bootloader.bin $(BUILD_DIR)/app.bin > $@
 
-app.bin: app.elf
-	$(OBJCOPY) -O binary $^ $@
+$(BUILD_DIR)/app.bin: $(BUILD_DIR)/app.elf
+	$(OBJCOPY) -O binary $< $@
 
-bootloader.bin: bootloader.elf
-	$(OBJCOPY) -O binary --pad-to=0x08001000 --gap-fill=0xFF $< $@
+$(BUILD_DIR)/bootloader.bin: $(BUILD_DIR)/bootloader.elf
+	$(OBJCOPY) -O binary --pad-to=0x08010000 --gap-fill=0xFF $< $@
 
-app.elf: $(OBJS_APP) $(LSCRIPT_APP)
-	$(LD) $(LDFLAGS) $(OBJS_APP) -o $@ -Wl,-Map=app.map -T $(LSCRIPT_APP)
+# .o 파일을 만들지 않고 .c 파일들로부터 직접 .elf 생성
+$(BUILD_DIR)/app.elf: $(SRCS_COMMON) $(SRCS_APP) $(APP_DIR)/app.ld | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SRCS_COMMON) $(SRCS_APP) -o $@ -Wl,-Map=$(BUILD_DIR)/app.map -T $(APP_DIR)/app.ld
 
-bootloader.elf: $(OBJS_BL) $(LSCRIPT_BL)
-	$(LD) $(LDFLAGS) $(OBJS_BL) -o $@ -Wl,-Map=bootloader.map -T $(LSCRIPT_BL)
-	
+$(BUILD_DIR)/bootloader.elf: $(SRCS_COMMON) $(SRCS_BL) $(BL_DIR)/bootloader.ld | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SRCS_COMMON) $(SRCS_BL) -o $@ -Wl,-Map=$(BUILD_DIR)/bootloader.map -T $(BL_DIR)/bootloader.ld
+
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
 clean:
-	rm -f *.bin *.elf *.o *.map
+	rm -rf $(BUILD_DIR)
+	rm -rf /mnt/c/wsl2\ workspace/image.bin 

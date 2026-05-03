@@ -1,6 +1,6 @@
 MEMORY
 {
-	FLASH (rx) : ORIGIN = 0x08001000, LENGTH = 0x0007f000
+	FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 0x00010000
 	RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 128K
 }
 
@@ -16,7 +16,7 @@ SECTIONS
 	.text :
 	{
 		_start_text = .;
-		*(.text*)
+		KEEP(*(.text*))
 		*(.rodata*)
 		. = ALIGN(4);
 		_end_text = .;
@@ -32,7 +32,7 @@ SECTIONS
 		_end_data = .;
 	} > RAM
 
-	.bss :
+	.bss (NOLOAD) :
 	{
 		_start_bss = .;
 		*(.bss*)
@@ -41,6 +41,7 @@ SECTIONS
 		_end_bss = .;
 		_end = .;
 	} > RAM
+	. = ALIGN(4);
 }
 
 END_STACK = ORIGIN(RAM) + LENGTH(RAM);

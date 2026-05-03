@@ -3,7 +3,7 @@
 #include "systick.h"
 #include "uart.h"
 
-#define APP_OFFSET (0x08001000)
+#define APP_OFFSET (0x08010000)
 #define VTOR (*(volatile uint32_t *)0xE000ED08)
 
 #define RCC_BASE (0x40023800)
