@@ -39,6 +39,6 @@ void main(void) {
 		}
 
 		led_toggle();
-		Delay(2000);
+		Delay(500);
 	}
 }

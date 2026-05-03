@@ -20,6 +20,7 @@ SRCS_APP = $(wildcard $(APP_DIR)/src/*.c)
 SRCS_BL = $(wildcard $(BL_DIR)/src/*.c)
 
 # 빌드 타겟
+# WSL -> Windows file system copy
 all: $(BUILD_DIR)/image.bin
 	cp $^ /mnt/c/wsl2\ workspace/image.bin
 
