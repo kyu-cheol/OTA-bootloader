@@ -11,8 +11,9 @@ extern uint32_t *END_STACK;
 //#define APP_OFFSET (0x08001000)
 //#define VTOR (*(volatile uint32_t *)0xE000ED08)
 
+// active ISRs
 extern void isr_systick(void);
-//extern void isr_tim2(void);
+
 
 extern void main_bl(void);
 

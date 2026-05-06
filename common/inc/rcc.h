@@ -22,9 +22,12 @@ typedef struct RCC_TYPEDEF {
 #define GPIOB_AHB1_CLOCK_ER_VAL (1 << 1)
 #define GPIOE_AHB1_CLOCK_ER_VAL (1 << 4)
 
+/* APB1 */
 #define TIM2_APB1_CLOCK_ER_VAL  (1 << 0)
 #define UART3_APB1_CLOCK_ER_VAL (1 << 18)
 
+/* APB2 */
+#define SPI1_APB2_CLOCK_ER_VAL   (1 << 12)
 #define SYSCFG_APB2_CLOCK_ER_VAL (1 << 14)
 
 #endif

@@ -6,7 +6,8 @@
 #define NVIC_IPRI_BASE (0xE000E400)
 
 #define NVIC_EXTI4_IRQN (10)
-#define NVIC_TIM2_IRQN (28)
+#define NVIC_TIM2_IRQN  (28)
+#define NVIC_SPI1_IRQN  (35)
 
 static inline void nvic_irq_enable(uint8_t n)
 {

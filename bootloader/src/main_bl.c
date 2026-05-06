@@ -34,7 +34,7 @@ void main_bl(void)
 	
 		uart_write(UART3, "\r\n(Enter Bootloader for OTA)\r\n");	
 		update_application();		// application image update
-		crc_check_image();		// update된 application image 무결성 검사
+		crc_check_image();			// update된 application image 무결성 검사
 	}
 	else if (reg & RCC_CSR_PINRSTF) {
 		RCC_CSR |= RCC_CSR_RMVF;        // remove reset flag
@@ -52,22 +52,22 @@ void main_bl(void)
 	// application으로 jump됨을 보장해야 함.
 	systick_disable();
 
-	asm volatile ("cpsid i");
+	__asm__ volatile ("cpsid i");
 	VTOR = (uint32_t)app_IV;
-	asm volatile ("ISB");
-	asm volatile ("cpsie i"); 
+	__asm__ volatile ("ISB");
+	__asm__ volatile ("cpsie i"); 
 
 	app_end_stack = (*(uint32_t *)APP_OFFSET);
 	app_entry = (void (*)(void))(*(uint32_t *)(APP_OFFSET + 4));
 
-	asm volatile ("msr msp, %0" ::"r"(app_end_stack));
-	asm volatile ("mov pc, %0" ::"r"(app_entry));
+	__asm__ volatile ("msr msp, %0" ::"r"(app_end_stack));
+	__asm__ volatile ("mov pc, %0" ::"r"(app_entry));
 }
 
 void update_application(void)
 {
 	uart_write(UART3, "application firmware updating...\r\n");
-        Delay(3000);
+    Delay(3000);
 }
 
 void crc_check_image(void)

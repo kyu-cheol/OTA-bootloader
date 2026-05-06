@@ -4,7 +4,7 @@
 #include "system.h"
 #include "rcc.h"
 
-#define UART_CR1_UART_ENABLE     (1 << 13)
+#define UART_CR1_UART_ENABLE    (1 << 13)
 #define UART_CR1_WORD_LEN       (1 << 12)
 #define UART_CR1_PARITY_ENABLED (1 << 10)
 #define UART_CR1_PARITY_ODD     (1 << 9)
@@ -20,6 +20,7 @@
 //#define RCC_APB1_CLOCK_ER (*(volatile uint32_t *)0x40023840)
 //#define UART3_APB1_CLOCK_ER_VAL (1 << 18)
 
+// PB10, PB11
 #define UART3_TX_PIN (10)
 #define UART3_RX_PIN (11)
 
@@ -36,14 +37,14 @@ static void uart3_pin_setup(void)
 	GPIOB->MODE = reg | 0x02 << (UART3_RX_PIN * 2);
 
 	reg = GPIOB->MODE & ~(0x03 << (UART3_TX_PIN * 2));
-        GPIOB->MODE = reg | 0x02 << (UART3_TX_PIN * 2);
+	GPIOB->MODE = reg | 0x02 << (UART3_TX_PIN * 2);
 
 	// select AF7(USART1..3)
 	reg = GPIOB->AFRH & ~(0X0F << ((UART3_RX_PIN - 8) * 4));
 	GPIOB->AFRH = reg | (UART3_PIN_AF << ((UART3_RX_PIN - 8) * 4));
 
 	reg = GPIOB->AFRH & ~(0X0F << ((UART3_TX_PIN - 8) * 4));
-        GPIOB->AFRH = reg | (UART3_PIN_AF << ((UART3_TX_PIN - 8) * 4));
+	GPIOB->AFRH = reg | (UART3_PIN_AF << ((UART3_TX_PIN - 8) * 4));
 }
 
 void uart_init(UART_x *uart, uint32_t bitrate)

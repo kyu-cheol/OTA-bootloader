@@ -18,7 +18,6 @@ void timer_init()
 
 	TIM2_CR1 = 0;   // disable timer counter
         __asm__ volatile ("DMB");
-
 }
 
 void timer_start_IT(uint16_t psc, uint32_t arr)
