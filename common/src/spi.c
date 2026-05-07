@@ -2,18 +2,15 @@
 #include "spi.h"
 #include "gpio.h"
 #include "rcc.h"
-
-#define SPI_CR1_MASTER     (1 << 2)
-#define SPI_CR1_SPI_EN     (1 << 6)
-#define SPI_CR2_SSOE       (1 << 2)
-#define SPI_SR_RX_NOTEMPTY (1 << 0)
-#define SPI_SR_TX_EMPTY    (1 << 1)
+#include "nvic.h"
 
 // SPI1 pins
 #define SPI1_MOSI_PIN (5)   // PB5
 #define SPI1_MISO_PIN (4)   // PB4
 #define SPI1_SCK_PIN  (5)   // PA5
 #define SPI1_NSS_PIN  (4)   // PA4
+
+void (*spi_rx_callback)(SPI_x *spi, uint8_t data) = 0;
 
 static void spi1_reset(void)
 {
@@ -83,7 +80,7 @@ void spi_init(SPI_x *spi, uint8_t mode, uint8_t size)
         reg |= SPI_CR1_MASTER;
 
         // SPI off
-        reg |= SPI_CR1_SPI_EN;
+        reg &= ~SPI_CR1_SPI_EN;
 
         // set CPOL/CPHA
         reg &= ~(0x03);
@@ -100,16 +97,18 @@ void spi_init(SPI_x *spi, uint8_t mode, uint8_t size)
 
         // RXNEIE, ERRIE(OVR) set
         reg = spi->CR2;
-        reg |= (1 << 6) | (1 << 5);
+        reg |= SPI_CR2_RXNEI_EN | SPI_CR2_ERRI_EN;
+
+        // NVIC spi interrupt enable
+        nvic_irq_enable(NVIC_SPI1_IRQN);
+        nvic_irq_setprio(NVIC_SPI1_IRQN, 0);
 
         // reset SSOE
         reg &= ~(1 << 2);
         spi->CR2 = reg;
 
         // SPI on
-        reg = spi->CR1;
-        reg |= SPI_CR1_SPI_EN;
-        spi->CR2 = reg;
+        spi->CR1 |= SPI_CR1_SPI_EN;
     }
 }
 
@@ -125,5 +124,34 @@ void spi_read(SPI_x *spi, uint16_t *data)
 
 void spi_deinit(SPI_x *spi)
 {
-    ;
+    uint32_t reg;
+
+    // SPI interrupt disable
+    reg = spi->CR2;
+    reg &= ~SPI_CR2_RXNEI_EN;
+    reg &= ~SPI_CR2_ERRI_EN;
+    spi->CR2 = reg;
+
+    // SPI off
+    reg = spi->CR1;
+    reg &= ~SPI_CR1_SPI_EN;
+    spi->CR1 = reg;
+
+    // wait busy
+    reg = spi->SR;
+    while (spi->SR & SPI_SR_BSY);
+
+    // SPI reset
+    spi1_reset();
+
+    // SPI clock off
+    RCC_APB2_CLOCK_ER &= ~SPI1_APB2_CLOCK_ER_VAL;
+
+    // NVIC disable irq
+    nvic_irq_disable(NVIC_SPI1_IRQN);
+}
+
+void spi_set_rx_callback(void (*func)(SPI_x *, uint8_t))
+{
+    spi_rx_callback = func;
 }

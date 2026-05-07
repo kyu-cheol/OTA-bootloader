@@ -37,15 +37,25 @@ typedef struct SPI_X {
 #define SPI_RECV_ONLY_SLAVE   5
 #define SPI_TRANS_ONLY_MASTER 6
 
-/*
-    param
-    spi : SPI num
-    mode : SPI mode
-    size : data size
-*/
+// SPI register setting
+#define SPI_CR1_MASTER     (1 << 2)
+#define SPI_CR1_SPI_EN     (1 << 6)
+
+#define SPI_CR2_SSOE       (1 << 2)
+#define SPI_CR2_ERRI_EN    (1 << 5)
+#define SPI_CR2_RXNEI_EN   (1 << 6)
+#define SPI_CR2_TXEI_EN    (1 << 7)
+
+#define SPI_SR_RX_NOTEMPTY (1 << 0)
+#define SPI_SR_TX_EMPTY    (1 << 1)
+#define SPI_SR_OVR		   (1 << 6)	
+#define SPI_SR_BSY         (1 << 7)
+
+/* SPI interface prototype */
 void spi_init(SPI_x *spi, uint8_t mode, uint8_t size);
 void spi_write(SPI_x *spi, uint16_t data);
 void spi_read(SPI_x *spi, uint16_t *data);
 void spi_deinit(SPI_x *spi);
+void spi_set_rx_callback(void (*func)(SPI_x *, uint8_t));
 
 #endif
