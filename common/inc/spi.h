@@ -46,6 +46,6 @@ typedef struct SPI_X {
 void spi_init(SPI_x *spi, uint8_t mode, uint8_t size);
 void spi_write(SPI_x *spi, uint16_t data);
 void spi_read(SPI_x *spi, uint16_t *data);
-void spi_deinit(SPI_x *spi)
+void spi_deinit(SPI_x *spi);
 
 #endif
