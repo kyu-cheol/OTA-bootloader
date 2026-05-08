@@ -14,6 +14,7 @@ extern uint8_t timer_flag;
 extern uint8_t button_flag;
 
 void spi_rx_handler(SPI_x *SPIx, uint8_t data);
+void spi_ovr_handler(SPI_x *SPIx, uint8_t data);
 
 void main(void) {
 	//flash_init();
@@ -26,6 +27,7 @@ void main(void) {
 	
 	spi_init(SPI1, SPI_RECV_ONLY_SLAVE, 8);
 	spi_set_rx_callback(spi_rx_handler);
+	spi_set_ovr_callback(spi_ovr_handler);
 
 	uart_write(UART3, "(Enter Application Firmware!)\r\n");
 
@@ -53,5 +55,12 @@ void spi_rx_handler(SPI_x *SPIx, uint8_t data)
 {
 	if (SPIx == SPI1) {
 		led_toggle();
+	}
+}
+
+void spi_ovr_handler(SPI_x *SPIx, uint8_t data)
+{
+	if (SPIx == SPI1) {
+		;
 	}
 }

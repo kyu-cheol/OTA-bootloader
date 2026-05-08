@@ -11,6 +11,7 @@
 #define SPI1_NSS_PIN  (4)   // PA4
 
 void (*spi_rx_callback)(SPI_x *spi, uint8_t data) = 0;
+void (*spi_ovr_callback)(SPI_x *spi, uint8_t data) = 0;
 
 static void spi1_reset(void)
 {
@@ -85,8 +86,8 @@ void spi_init(SPI_x *spi, uint8_t mode, uint8_t size)
         // set CPOL/CPHA
         reg &= ~(0x03);
 
-        // set Data frame format(8bit)
-        reg &= ~(1 << 11);
+        // set Data frame format(8bit/16bit)
+        (size == 16) ? (reg |= (1 << 11)) : (reg &= ~(1 << 11));
 
         // set RXONLY
         reg |= (1 << 10);
@@ -154,4 +155,9 @@ void spi_deinit(SPI_x *spi)
 void spi_set_rx_callback(void (*func)(SPI_x *, uint8_t))
 {
     spi_rx_callback = func;
+}
+
+void spi_set_ovr_callback(void (*func)(SPI_x *, uint8_t))
+{
+    spi_ovr_callback = func;
 }
