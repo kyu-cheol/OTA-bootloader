@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "gpio.h"
 #include "system.h"
@@ -53,7 +54,11 @@ void main(void) {
 
 void spi_rx_handler(SPI_x *SPIx, uint8_t data)
 {
+	char str[10] = { 0, };
+
 	if (SPIx == SPI1) {
+		sprintf(str, "recv :0x%x\r\n", data);
+		uart_write(UART3, str);
 		led_toggle();
 	}
 }
@@ -61,6 +66,6 @@ void spi_rx_handler(SPI_x *SPIx, uint8_t data)
 void spi_ovr_handler(SPI_x *SPIx, uint8_t data)
 {
 	if (SPIx == SPI1) {
-		;
+		uart_write(UART3, "Over Run Interrupt Occured.\r\n");
 	}
 }

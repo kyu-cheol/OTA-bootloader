@@ -10,9 +10,10 @@ APP_DIR = app
 BL_DIR = bootloader
 
 # 컴파일 및 링크 플래그 (통합 사용)
-CFLAGS = -mcpu=cortex-m4 -mthumb -g -ggdb -Wall -Wno-main -Wstack-usage=200 -ffreestanding -nostdlib
+CFLAGS = -mcpu=cortex-m4 -mthumb -g -ggdb -Wall -Wno-main -Wstack-usage=200 -ffreestanding #-nostdlib
 CFLAGS += -I$(COMMON_DIR)/inc -I$(APP_DIR)/inc -I$(BL_DIR)/inc
 LDFLAGS = -Wl,-gc-sections -mcpu=cortex-m4 -mthumb -nostartfiles
+LDFLAGS += --specs=nano.specs -lc -lm -lnosys
 
 # 파일 목록 자동 생성
 SRCS_COMMON = $(wildcard $(COMMON_DIR)/src/*.c)
@@ -35,7 +36,7 @@ $(BUILD_DIR)/bootloader.bin: $(BUILD_DIR)/bootloader.elf
 
 # .o 파일을 만들지 않고 .c 파일들로부터 직접 .elf 생성
 $(BUILD_DIR)/app.elf: $(SRCS_COMMON) $(SRCS_APP) $(APP_DIR)/app.ld | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(SRCS_COMMON) $(SRCS_APP) -o $@ -Wl,-Map=$(BUILD_DIR)/app.map -T $(APP_DIR)/app.ld
+	$(CC) $(CFLAGS) $(SRCS_COMMON) $(SRCS_APP) -o $@ $(LDFLAGS) -Wl,-Map=$(BUILD_DIR)/app.map -T $(APP_DIR)/app.ld
 
 $(BUILD_DIR)/bootloader.elf: $(SRCS_COMMON) $(SRCS_BL) $(BL_DIR)/bootloader.ld | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(SRCS_COMMON) $(SRCS_BL) -o $@ -Wl,-Map=$(BUILD_DIR)/bootloader.map -T $(BL_DIR)/bootloader.ld
