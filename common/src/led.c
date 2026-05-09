@@ -12,7 +12,7 @@ void led_setup(void)
 	GPIOA->MODE |= GPIO_MODE_OUTPUT << (LED_PIN1 * 2);
 
 	GPIOA->MODE &= ~(0x03 << (LED_PIN2 * 2));
-        GPIOA->MODE |= GPIO_MODE_OUTPUT << (LED_PIN2 * 2);
+    GPIOA->MODE |= GPIO_MODE_OUTPUT << (LED_PIN2 * 2);
 
 	// set pull-up mode
 	// HIGH : led off
@@ -21,7 +21,7 @@ void led_setup(void)
 	GPIOA->PUPD |= GPIO_PUPD_PU << (LED_PIN1 * 2);
 
 	GPIOA->PUPD &= ~(0x03 << (LED_PIN2 * 2));
-        GPIOA->PUPD |= GPIO_PUPD_PU << (LED_PIN2 * 2);
+    GPIOA->PUPD |= GPIO_PUPD_PU << (LED_PIN2 * 2);
 }
 
 void led_on(void)

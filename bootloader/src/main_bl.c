@@ -32,7 +32,7 @@ void main_bl(void)
 	if (reg & RCC_CSR_SFTRSTF) {
 		RCC_CSR |= RCC_CSR_RMVF;	// remove reset flag
 	
-		uart_write(UART3, "\r\n(Enter Bootloader for OTA)\r\n");	
+		uart_write(UART3, "\r\n(Enter Bootloader for OTA)\r\n");
 		update_application();		// application image update
 		crc_check_image();			// update된 application image 무결성 검사
 	}
@@ -73,5 +73,5 @@ void update_application(void)
 void crc_check_image(void)
 {
 	uart_write(UART3, "image binary crc checking...\r\n");
-	Delay(2000);	
+	Delay(2000);
 }

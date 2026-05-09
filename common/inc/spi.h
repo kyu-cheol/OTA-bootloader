@@ -56,7 +56,7 @@ void spi_init(SPI_x *spi, uint8_t mode, uint8_t size);
 void spi_write(SPI_x *spi, uint16_t data);
 void spi_read(SPI_x *spi, uint16_t *data);
 void spi_deinit(SPI_x *spi);
-void spi_set_rx_callback(void (*func)(SPI_x *, uint8_t));
-void spi_set_ovr_callback(void (*func)(SPI_x *, uint8_t));
+void spi_regist_rx_callback(void (*func)(SPI_x *, uint8_t));
+void spi_regist_ovr_callback(void (*func)(SPI_x *, uint8_t));
 
 #endif

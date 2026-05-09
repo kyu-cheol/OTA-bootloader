@@ -27,5 +27,6 @@ typedef struct UART_X {
 
 void uart_init(UART_x *uart, uint32_t bitrate);	// "bitrate-8-N-1" 고정
 void uart_write(UART_x *uart, const char *data);
+void uart_deinit(UART_x *uart);
 
 #endif

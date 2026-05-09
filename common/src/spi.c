@@ -16,6 +16,7 @@ void (*spi_ovr_callback)(SPI_x *spi, uint8_t data) = 0;
 static void spi1_reset(void)
 {
     RCC_APB2_CLOCK_RST |= SPI1_APB2_CLOCK_ER_VAL;
+    __asm__ volatile ("DMB");
     RCC_APB2_CLOCK_RST &= ~SPI1_APB2_CLOCK_ER_VAL;
 }
 
@@ -61,6 +62,10 @@ static void spi1_pins_setup(void)
     reg &= ~(0x03 << (SPI1_NSS_PIN * 2));
     reg |= (GPIO_PUPD_PU << (SPI1_NSS_PIN * 2));
     GPIOA->PUPD = reg;
+
+    /* SPI pin 고속모드 설정 */
+    GPIOA->OSPEED |= (GPIO_OSPEED_VH << (SPI1_SCK_PIN * 2)) | (GPIO_OSPEED_VH << (SPI1_NSS_PIN * 2));
+    GPIOB->OSPEED |= (GPIO_OSPEED_VH << (SPI1_MOSI_PIN * 2)) | (GPIO_OSPEED_VH << (SPI1_MISO_PIN * 2));
 }
 
 void spi_init(SPI_x *spi, uint8_t mode, uint8_t size)
@@ -76,12 +81,12 @@ void spi_init(SPI_x *spi, uint8_t mode, uint8_t size)
         // SPI reset
         spi1_reset();
 
-        // set slave mode(MSTR)
-        reg = spi->CR1;
-        reg |= SPI_CR1_MASTER;
-
         // SPI off
+        reg = spi->CR1;
         reg &= ~SPI_CR1_SPI_EN;
+        
+        // set slave mode(MSTR)
+        reg &= ~SPI_CR1_MASTER;
 
         // set CPOL/CPHA
         reg &= ~(0x03);
@@ -100,13 +105,13 @@ void spi_init(SPI_x *spi, uint8_t mode, uint8_t size)
         reg = spi->CR2;
         reg |= SPI_CR2_RXNEI_EN | SPI_CR2_ERRI_EN;
 
-        // NVIC spi interrupt enable
-        nvic_irq_enable(NVIC_SPI1_IRQN);
-        nvic_irq_setprio(NVIC_SPI1_IRQN, 0);
-
         // reset SSOE
         reg &= ~(1 << 2);
         spi->CR2 = reg;
+
+        // NVIC spi interrupt enable
+        nvic_irq_enable(NVIC_SPI1_IRQN);
+        nvic_irq_setprio(NVIC_SPI1_IRQN, 2);
 
         // SPI on
         spi->CR1 |= SPI_CR1_SPI_EN;
@@ -152,12 +157,12 @@ void spi_deinit(SPI_x *spi)
     nvic_irq_disable(NVIC_SPI1_IRQN);
 }
 
-void spi_set_rx_callback(void (*func)(SPI_x *, uint8_t))
+void spi_regist_rx_callback(void (*func)(SPI_x *, uint8_t))
 {
     spi_rx_callback = func;
 }
 
-void spi_set_ovr_callback(void (*func)(SPI_x *, uint8_t))
+void spi_regist_ovr_callback(void (*func)(SPI_x *, uint8_t))
 {
     spi_ovr_callback = func;
 }

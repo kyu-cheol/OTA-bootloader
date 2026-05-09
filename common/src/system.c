@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <sys/stat.h>
 #include "system.h"
 #include "systick.h"
 #include "rcc.h"
@@ -109,8 +110,8 @@ void clock_config(void)
 	while ((RCC->CFGR & ((1 << 1) | (1 << 0))) != RCC_CFGR_SW_PLL);
 
 	// HSI Off
-        RCC->CR &= ~RCC_CR_HSION;
-        DMB();
+    RCC->CR &= ~RCC_CR_HSION;
+    DMB();
 }
 
 void Delay(uint32_t delay)
@@ -131,4 +132,28 @@ void SoftwareReset(void)
 	for (;;) {
 		// wait until reset
 	}
+}
+
+
+/* 시스템 콜 더미(Dummy) 함수들
+ * 표준 라이브러리(Newlib)가 요구하는 최소한의 환경을 제공하여 링커 경고를 제거
+ */
+int _isatty(int file) {
+    return 1; // 모든 출력 대상을 터미널(tty)로 간주
+}
+
+int _fstat(int file, struct stat *st) {
+    return 0;
+}
+
+int _lseek(int file, int ptr, int dir) {
+    return 0; // 파일 포인터 이동 기능 없음
+}
+
+int _read(int file, char *ptr, int len) {
+    return 0; // 입력 기능은 일단 0바이트 읽기로 처리
+}
+
+int _close(int file) {
+    return -1; // 파일을 닫을 수 없음
 }

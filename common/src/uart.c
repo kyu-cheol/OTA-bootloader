@@ -14,12 +14,6 @@
 #define UART_SR_TXE             (1 << 7)
 #define UART_SR_RXNE            (1 << 5)
 
-//#define RCC_AHB1_CLOCK_ER (*(volatile uint32_t *)0x40023830)
-//#define GPIOB_AHB1_CLOCK_ER_VAL (1 << 1)
-
-//#define RCC_APB1_CLOCK_ER (*(volatile uint32_t *)0x40023840)
-//#define UART3_APB1_CLOCK_ER_VAL (1 << 18)
-
 // PB10, PB11
 #define UART3_TX_PIN (10)
 #define UART3_RX_PIN (11)
@@ -53,12 +47,12 @@ void uart_init(UART_x *uart, uint32_t bitrate)
 
 	RCC_APB1_CLOCK_ER |= UART3_APB1_CLOCK_ER_VAL;
 
-	uart->CR1 |= UART_CR1_TX_ENABLE;	// trnasmit enable
-	uart->BRR = PCLK1 / bitrate;		// bitrate setting
-	uart->CR1 &= ~UART_CR1_WORD_LEN;	// select 8bits len
+	uart->CR1 |= UART_CR1_TX_ENABLE;		// trnasmit enable
+	uart->BRR = PCLK1 / bitrate;			// bitrate setting
+	uart->CR1 &= ~UART_CR1_WORD_LEN;		// select 8bits len
 	uart->CR1 &= ~UART_CR1_PARITY_ENABLED;	// parity disable
-	uart->CR2 &= ~UART_CR2_STOPBITS;	// select 1 stop bit
-	uart->CR1 |= UART_CR1_UART_ENABLE;	// uart enable
+	uart->CR2 &= ~UART_CR2_STOPBITS;		// select 1 stop bit
+	uart->CR1 |= UART_CR1_UART_ENABLE;		// uart enable
 }
 
 void uart_write(UART_x *uart, const char *data)
@@ -76,3 +70,19 @@ void uart_write(UART_x *uart, const char *data)
 	}
 }
 
+void uart_deinit(UART_x *uart)
+{
+	;
+}
+
+/* printf stub function */
+int _write(int fd, char *ptr, int len)
+{
+	for (int i = 0; i < len; ++i) {
+		while (!(UART3->SR & UART_SR_TXE));
+
+		UART3->DR = (uint8_t)ptr[i];
+	}
+
+	return len;
+}

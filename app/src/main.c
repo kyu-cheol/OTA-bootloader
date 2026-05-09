@@ -21,25 +21,26 @@ void main(void) {
 	//flash_init();
 	//clock_config();
 	systick_enable();
-	timer_init();
+	timer_init(TIM2, 4200 - 1, 10000 - 1);
 	led_setup();
 	button_setup();
 	//uart_init(UART3, 115200);
 	
 	spi_init(SPI1, SPI_RECV_ONLY_SLAVE, 8);
-	spi_set_rx_callback(spi_rx_handler);
-	spi_set_ovr_callback(spi_ovr_handler);
+	spi_regist_rx_callback(spi_rx_handler);
+	spi_regist_ovr_callback(spi_ovr_handler);
 
 	uart_write(UART3, "(Enter Application Firmware!)\r\n");
+	printf("[TEST] hello world\n");
 
-	//timer_start_IT(4200 - 1, 10000 - 1);	// 0.5s timer
+	timer_start_IT(TIM2);	// 0.5s timer
 
-	while(1) {
-		// if (timer_flag) {
-		// 	timer_flag = 0;
+	while (1) {
+		if (timer_flag) {
+			timer_flag = 0;
 
-		// 	led_toggle();
-		// }
+			led_toggle();
+		}
 
 		if (button_flag) {
 			button_flag = 0;
@@ -48,17 +49,18 @@ void main(void) {
 		}
 
 		// led_toggle();
-		// Delay(500);
+		// Delay(2000);
 	}
 }
 
 void spi_rx_handler(SPI_x *SPIx, uint8_t data)
 {
-	char str[10] = { 0, };
+	//char str[10] = { 0, };
 
 	if (SPIx == SPI1) {
-		sprintf(str, "recv :0x%x\r\n", data);
-		uart_write(UART3, str);
+		// sprintf(str, "recv :0x%x\r\n", data);
+		// uart_write(UART3, str);
+		printf("recv :0x%x\r\n", data);
 		led_toggle();
 	}
 }
@@ -66,6 +68,6 @@ void spi_rx_handler(SPI_x *SPIx, uint8_t data)
 void spi_ovr_handler(SPI_x *SPIx, uint8_t data)
 {
 	if (SPIx == SPI1) {
-		uart_write(UART3, "Over Run Interrupt Occured.\r\n");
+		uart_write(UART3, "[ERROR] SPI Over Run Interrupt Occured.\r\n");
 	}
 }

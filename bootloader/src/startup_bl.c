@@ -14,7 +14,6 @@ extern uint32_t *END_STACK;
 // active ISRs
 extern void isr_systick(void);
 
-
 extern void main_bl(void);
 
 void isr_reset(void) {
