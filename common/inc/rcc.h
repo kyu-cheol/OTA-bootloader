@@ -18,9 +18,16 @@ typedef struct RCC_TYPEDEF {
 #define RCC_APB1_CLOCK_ER (*(volatile uint32_t *)0x40023840)
 #define RCC_APB2_CLOCK_ER (*(volatile uint32_t *)0x40023844)
 
+/* GPIO */
 #define GPIOA_AHB1_CLOCK_ER_VAL (1 << 0)
 #define GPIOB_AHB1_CLOCK_ER_VAL (1 << 1)
+#define GPIOC_AHB1_CLOCK_ER_VAL (1 << 2)
+#define GPIOD_AHB1_CLOCK_ER_VAL (1 << 3)
 #define GPIOE_AHB1_CLOCK_ER_VAL (1 << 4)
+#define GPIOF_AHB1_CLOCK_ER_VAL (1 << 5)
+#define GPIOG_AHB1_CLOCK_ER_VAL (1 << 6)
+#define GPIOH_AHB1_CLOCK_ER_VAL (1 << 7)
+#define GPIOI_AHB1_CLOCK_ER_VAL (1 << 8)
 
 /* APB1 */
 #define TIM2_APB1_CLOCK_ER_VAL  (1 << 0)

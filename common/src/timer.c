@@ -3,12 +3,6 @@
 #include "nvic.h"
 #include "rcc.h"
 
-#define TIM_DIER_UIE 	     (1 << 0)	// Update Interrupt Enable
-#define TIM_SR_UIF           (1 << 0)	// Update Interrupt Flag
-#define TIM_EGR_UG			 (1 << 0)	// Update Generation
-#define TIM_CR1_COUNT_ENABLE (1 << 0)
-#define TIM_CR1_ONE_PULSE    (1 << 3)
-
 static void timer_reset(TIM_x *tim)
 {
 	if (tim == TIM2) {
@@ -36,6 +30,11 @@ static void timer_enable_interrupt(TIM_x *tim)
 	}
 
 	tim->DIER |= TIM_DIER_UIE;
+}
+
+static void timer_pwm_channel_config(TIM_x *tim, uint8_t channel)
+{
+	;
 }
 
 void timer_init(TIM_x *tim, uint16_t psc, uint32_t arr)
@@ -67,3 +66,54 @@ void timer_start_IT(TIM_x *tim)
     __asm__ volatile ("DMB");
 }
 
+void timer_start_PWM(TIM_x *tim, uint8_t channel, GPIO_Port *gpiox, uint8_t pin, uint32_t duty)
+{
+	uint8_t af_num;
+
+	/* GPIO port clock enable */
+	gpio_enable_clock(gpiox);
+
+    // 1. GPIO mode, ospeed, pull-down 설정
+	gpio_set_mode(gpiox, pin, GPIO_MODE_AF);
+	gpio_set_ospeed(gpiox, pin, GPIO_OSPEED_VH);
+	gpio_set_pupd(gpiox, pin, GPIO_PUPD_PD);
+    
+    // 2. 해당 핀의 AF 번호 설정 (데이터시트 기반)
+	if (tim == TIM1 || tim == TIM2) af_num = TIM1_2_PIN_AF;
+	else if (tim == TIM3 || tim == TIM4 || tim == TIM5) af_num = TIM3_5_PIN_AF;
+	else af_num = TIM8_11_PIN_AF;
+
+	gpio_set_af(gpiox, pin, af_num);
+
+    // 3. 타이머 채널별 PWM 설정 (CCMR, CCER 등)
+    timer_pwm_channel_config(tim, channel);
+
+	// 4. 초기 CCR(Duty) 값 설정
+    if (channel == 1)      tim->CCR1 = duty;
+    else if (channel == 2) tim->CCR2 = duty;
+    else if (channel == 3) tim->CCR3 = duty;
+    else if (channel == 4) tim->CCR4 = duty;
+
+	// 고급 타이머(TIM1, TIM8)를 위한 MOE 설정
+    // 고급 타이머는 메인 출력을 명시적으로 켜줘야 핀으로 신호가 나감.
+    if (tim == TIM1 || tim == TIM8) {
+        tim->BDTR |= (1 << 15); // MOE (Main Output Enable)
+    }
+
+    // 설정값 즉시 반영 (Update Generation)
+    tim->EGR |= (1 << 0); // UG 비트: PSC, ARR, CCR 설정을 그림자 레지스터로 즉시 복사
+
+    // 5. 타이머 시작 (ARPE bit를 켜서 ARR값을 버퍼에 저장해 놨다가 다음 루프때 적용)
+    tim->CR1 |= TIM_CR1_COUNT_ENABLE | TIM_CR1_ARPE;
+	__asm__ volatile ("DMB");
+}
+
+void timer_stop(TIM_x *tim)
+{
+	;
+}
+
+void timer_deinit(TIM_x *tim)
+{
+	;
+}

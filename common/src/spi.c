@@ -22,50 +22,31 @@ static void spi1_reset(void)
 
 static void spi1_pins_setup(void)
 {
-    uint32_t reg;
-
     RCC_AHB1_CLOCK_ER |= GPIOA_AHB1_CLOCK_ER_VAL;
     RCC_AHB1_CLOCK_ER |= GPIOB_AHB1_CLOCK_ER_VAL;
 
     /* PA5, PA4 SPI AF gpio set */
-    reg = GPIOA->MODE;
-    reg &= ~(0x03 << (SPI1_SCK_PIN * 2));
-    reg &= ~(0x03 << (SPI1_NSS_PIN * 2));
-    reg |= (GPIO_MODE_AF << (SPI1_SCK_PIN * 2));
-    reg |= (GPIO_MODE_AF << (SPI1_NSS_PIN * 2));
-    GPIOA->MODE = reg;
+    gpio_set_mode(GPIOA, SPI1_SCK_PIN, GPIO_MODE_AF);
+    gpio_set_mode(GPIOA, SPI1_NSS_PIN, GPIO_MODE_AF);
 
-    reg = GPIOA->AFRL;
-    reg &= ~(0xf << (SPI1_SCK_PIN * 4));
-    reg &= ~(0xf << (SPI1_NSS_PIN * 4));
-    reg |= (SPI1_PIN_AF << (SPI1_SCK_PIN * 4));
-    reg |= (SPI1_PIN_AF << (SPI1_NSS_PIN * 4));
-    GPIOA->AFRL = reg;
+    gpio_set_af(GPIOA, SPI1_SCK_PIN, SPI1_PIN_AF);
+    gpio_set_af(GPIOA, SPI1_NSS_PIN, SPI1_PIN_AF);
 
     /* PB5, PB4 SPI AF gpio set */
-    reg = GPIOB->MODE;
-    reg &= ~(0x03 << (SPI1_MOSI_PIN * 2));
-    reg &= ~(0x03 << (SPI1_MISO_PIN * 2));
-    reg |= (GPIO_MODE_AF << (SPI1_MOSI_PIN * 2));
-    reg |= (GPIO_MODE_AF << (SPI1_MISO_PIN * 2));
-    GPIOB->MODE = reg;
+    gpio_set_mode(GPIOB, SPI1_MOSI_PIN, GPIO_MODE_AF);
+    gpio_set_mode(GPIOB, SPI1_MISO_PIN, GPIO_MODE_AF);
 
-    reg = GPIOB->AFRL;
-    reg &= ~(0xf << (SPI1_MOSI_PIN * 4));
-    reg &= ~(0xf << (SPI1_MISO_PIN * 4));
-    reg |= (SPI1_PIN_AF << (SPI1_MOSI_PIN * 4));
-    reg |= (SPI1_PIN_AF << (SPI1_MISO_PIN * 4));
-    GPIOB->AFRL = reg;
+    gpio_set_af(GPIOB, SPI1_MOSI_PIN, SPI1_PIN_AF);
+    gpio_set_af(GPIOB, SPI1_MISO_PIN, SPI1_PIN_AF);
 
     /* NSS pin pull-up */
-    reg = GPIOA->PUPD;
-    reg &= ~(0x03 << (SPI1_NSS_PIN * 2));
-    reg |= (GPIO_PUPD_PU << (SPI1_NSS_PIN * 2));
-    GPIOA->PUPD = reg;
+    gpio_set_pupd(GPIOA, SPI1_NSS_PIN, GPIO_PUPD_PU);
 
     /* SPI pin 고속모드 설정 */
-    GPIOA->OSPEED |= (GPIO_OSPEED_VH << (SPI1_SCK_PIN * 2)) | (GPIO_OSPEED_VH << (SPI1_NSS_PIN * 2));
-    GPIOB->OSPEED |= (GPIO_OSPEED_VH << (SPI1_MOSI_PIN * 2)) | (GPIO_OSPEED_VH << (SPI1_MISO_PIN * 2));
+    gpio_set_ospeed(GPIOA, SPI1_SCK_PIN, GPIO_OSPEED_VH);
+    gpio_set_ospeed(GPIOA, SPI1_NSS_PIN, GPIO_OSPEED_VH);
+    gpio_set_ospeed(GPIOB, SPI1_MOSI_PIN, GPIO_OSPEED_VH);
+    gpio_set_ospeed(GPIOB, SPI1_MISO_PIN, GPIO_OSPEED_VH);
 }
 
 void spi_init(SPI_x *spi, uint8_t mode, uint8_t size)
