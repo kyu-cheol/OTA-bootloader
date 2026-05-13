@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 
 extern unsigned int _stored_data;
 extern unsigned int _start_data;
@@ -44,6 +45,7 @@ void isr_reset(void) {
 void isr_fault(void)
 {
     /* Panic. */
+    printf("fault!\r\n");
     while(1);
 }
 

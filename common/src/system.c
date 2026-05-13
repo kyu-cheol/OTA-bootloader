@@ -14,11 +14,6 @@
 #define FLASH_ACR_ENABLE_PREFETCH   (1 << 8)
 
 /*** RCC ***/
-//#define RCC_BASE (0x40023800)
-//#define RCC_CR      (*(volatile uint32_t *)(RCC_BASE + 0x00))
-//#define RCC_PLLCFGR (*(volatile uint32_t *)(RCC_BASE + 0x04))
-//#define RCC_CFGR    (*(volatile uint32_t *)(RCC_BASE + 0x08))
-
 #define RCC_CR_PLLRDY               (1 << 25)
 #define RCC_CR_PLLON                (1 << 24)
 #define RCC_CR_HSERDY               (1 << 17)
@@ -91,6 +86,7 @@ void clock_config(void)
 	DMB();
 
 	// PLL config
+	// PLL Source Mux에서 HSE를 input으로 설정
 	// PLL_OUT_FREQ = PLL_SRC_FREQ(HSE) / M * N / P
 	reg32 = RCC->PLLCFGR;
 	reg32 &= ~PLL_FULL_MASK;
@@ -103,6 +99,7 @@ void clock_config(void)
 	while ((RCC->CR & RCC_CR_PLLRDY) == 0);
 
 	// Select SYSCLK with PLL
+	// System Clock Mux에서 PLLCLK 선택
 	reg32 = RCC->CFGR;
 	reg32 &= ~((1 << 1) | (1 << 0));
 	RCC->CFGR = (reg32 | RCC_CFGR_SW_PLL);

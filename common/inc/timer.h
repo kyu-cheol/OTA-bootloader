@@ -64,7 +64,7 @@ typedef struct TIM_X {
 #define TIM_EGR_UG			 (1 << 0)	// Update Generation
 #define TIM_CR1_COUNT_ENABLE (1 << 0)
 #define TIM_CR1_ONE_PULSE    (1 << 3)
-#define TIM_CR1_ARPE         (1 << 7)
+#define TIM_CR1_ARPE         (1 << 7)   // ARR Preload Enable
 
 /* TIM interface prototypes */
 void timer_init(TIM_x *tim, uint16_t psc, uint32_t arr);
