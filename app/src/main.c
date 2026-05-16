@@ -23,18 +23,22 @@ uint8_t test_flag;
 void main(void) {
 	//flash_init();
 	//clock_config();
+	//gpio_init();
 	systick_enable();
 	timer_init(TIM2, 4200 - 1, 1000 - 1);
 	led_setup();
 	button_setup();
 	//uart_init(UART3, 115200);
 	
-	spi_init(SPI1, SPI_RECV_ONLY_SLAVE, 8);
-	spi_regist_rx_callback(spi_rx_handler);
-	spi_regist_ovr_callback(spi_ovr_handler);
+	// spi_init(SPI1, SPI_RECV_ONLY_SLAVE, 8);
+	// spi_regist_rx_callback(spi_rx_handler);
+	// spi_regist_ovr_callback(spi_ovr_handler);
 
+	uart_write(UART3, "\r\n\r\n=============================\r\n");
 	uart_write(UART3, "(Enter Application Firmware!)\r\n");
-	printf("[TEST] hello world\n\r");
+	uart_write(UART3, "=============================\r\n\r\n");
+
+	printf("[TEST] hello world\r\n");
 
 	//timer_start_IT(TIM2);	// 0.5s timer
 	timer_start_PWM(TIM2, 2, GPIOA, 1, 500);
@@ -53,40 +57,22 @@ void main(void) {
 			SoftwareReset();	
 		}
 
-		if (test_flag) {
-			test_flag = 0;
-
-			for (int i = 0; i < 640; i++) {
-				printf("buffer[%d]: 0x%x\r\n", i, buffer[i]);
-			}
-		}
-
 		led_toggle();
 		Delay(500);
 	}
 }
 
-void spi_rx_handler(SPI_x *SPIx, uint8_t data)
-{
-	static uint16_t idx = 0;
+// void spi_rx_handler(SPI_x *SPIx, uint8_t data)
+// {
+// 	if (SPIx == SPI1) {
+// 		;
+// 	}
+// }
 
-	if (SPIx == SPI1) {
-		//printf("recv :0x%x\r\n", data);
-
-		if (idx == 640) test_flag = 1;
-		
-		if (idx < 640) {
-			buffer[idx++] = data;
-		}
-			
-		//led_toggle();
-	}
-}
-
-void spi_ovr_handler(SPI_x *SPIx, uint8_t data)
-{
-	if (SPIx == SPI1) {
-		uart_write(UART3, "[ERROR] SPI Over Run Interrupt Occured.\r\n");
-		while (1);
-	}
-}
+// void spi_ovr_handler(SPI_x *SPIx, uint8_t data)
+// {
+// 	if (SPIx == SPI1) {
+// 		uart_write(UART3, "[ERROR] SPI Over Run Interrupt Occured.\r\n");
+// 		while (1);
+// 	}
+// }

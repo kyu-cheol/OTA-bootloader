@@ -13,6 +13,7 @@ extern uint32_t *END_STACK;
 
 // active ISRs
 extern void isr_systick(void);
+extern void isr_spi1(void);
 
 extern void main_bl(void);
 
@@ -104,7 +105,7 @@ void (* const IV[])(void) =
     isr_empty,              // I2C1_ER_IRQ 32
     isr_empty,              // I2C2_EV_IRQ 33
     isr_empty,              // I2C2_ER_IRQ 34
-    isr_empty,              // SPI1_IRQ 35
+    isr_spi1,               // SPI1_IRQ 35
     isr_empty,              // SPI2_IRQ 36
     isr_empty,              // USART1_IRQ 37
     isr_empty,              // USART2_IRQ 38

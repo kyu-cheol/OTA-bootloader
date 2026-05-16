@@ -22,9 +22,6 @@ static void spi1_reset(void)
 
 static void spi1_pins_setup(void)
 {
-    RCC_AHB1_CLOCK_ER |= GPIOA_AHB1_CLOCK_ER_VAL;
-    RCC_AHB1_CLOCK_ER |= GPIOB_AHB1_CLOCK_ER_VAL;
-
     /* PA5, PA4 SPI AF gpio set */
     gpio_set_mode(GPIOA, SPI1_SCK_PIN, GPIO_MODE_AF);
     gpio_set_mode(GPIOA, SPI1_NSS_PIN, GPIO_MODE_AF);
@@ -52,6 +49,7 @@ static void spi1_pins_setup(void)
 void spi_init(SPI_x *spi, uint8_t mode, uint8_t size)
 {
     uint32_t reg;
+    volatile uint32_t dummy;
 
     if (mode == SPI_RECV_ONLY_SLAVE) {
         spi1_pins_setup();
@@ -97,6 +95,9 @@ void spi_init(SPI_x *spi, uint8_t mode, uint8_t size)
         // SPI on
         spi->CR1 |= SPI_CR1_SPI_EN;
     }
+
+    dummy= spi->DR;
+    (void)dummy;
 }
 
 void spi_write(SPI_x *spi, uint16_t data)

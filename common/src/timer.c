@@ -141,9 +141,6 @@ void timer_start_PWM(TIM_x *tim, uint8_t channel, GPIO_Port *gpiox, uint8_t pin,
 {
 	uint8_t af_num;
 
-	/* GPIO port clock enable */
-	gpio_enable_clock(gpiox);
-
     // 1. GPIO mode, ospeed, pull-down 설정
 	gpio_set_mode(gpiox, pin, GPIO_MODE_AF);
 	gpio_set_ospeed(gpiox, pin, GPIO_OSPEED_VH);

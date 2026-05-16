@@ -39,7 +39,7 @@ $(BUILD_DIR)/app.elf: $(SRCS_COMMON) $(SRCS_APP) $(APP_DIR)/app.ld | $(BUILD_DIR
 	$(CC) $(CFLAGS) $(SRCS_COMMON) $(SRCS_APP) -o $@ $(LDFLAGS) -Wl,-Map=$(BUILD_DIR)/app.map -T $(APP_DIR)/app.ld
 
 $(BUILD_DIR)/bootloader.elf: $(SRCS_COMMON) $(SRCS_BL) $(BL_DIR)/bootloader.ld | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(SRCS_COMMON) $(SRCS_BL) -o $@ -Wl,-Map=$(BUILD_DIR)/bootloader.map -T $(BL_DIR)/bootloader.ld
+	$(CC) $(CFLAGS) $(SRCS_COMMON) $(SRCS_BL) -o $@ $(LDFLAGS) -Wl,-Map=$(BUILD_DIR)/bootloader.map -T $(BL_DIR)/bootloader.ld
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)

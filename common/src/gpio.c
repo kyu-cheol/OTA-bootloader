@@ -1,6 +1,33 @@
 #include "gpio.h"
 #include "rcc.h"
 
+void gpio_init(void)
+{
+    RCC_AHB1_CLOCK_ER |= (GPIOA_AHB1_CLOCK_ER_VAL | GPIOB_AHB1_CLOCK_ER_VAL | \
+                          GPIOC_AHB1_CLOCK_ER_VAL | GPIOD_AHB1_CLOCK_ER_VAL | \
+                          GPIOE_AHB1_CLOCK_ER_VAL | GPIOF_AHB1_CLOCK_ER_VAL | \
+                          GPIOG_AHB1_CLOCK_ER_VAL | GPIOH_AHB1_CLOCK_ER_VAL | \
+                          GPIOI_AHB1_CLOCK_ER_VAL);
+    
+    // RCC 레지스터 동기화
+    (void)RCC_AHB1_CLOCK_ER; 
+}
+
+void gpio_wrtie_pin(GPIO_Port *gpiox, uint8_t pin, uint8_t pin_state)
+{
+    if (pin_state == HIGH) {
+        gpiox->BSRR = (1 << pin);
+    }
+    else {
+        gpiox->BSRR = (1 << (pin + 16));
+    }
+}
+
+uint8_t gpio_read_pin(GPIO_Port *gpiox, uint8_t pin)
+{
+    return (uint8_t)((gpiox->IDR >> pin) & 1);
+}
+
 void gpio_set_mode(GPIO_Port *gpiox, uint8_t pin, uint8_t mode)
 {
     uint32_t reg = gpiox->MODE;
@@ -37,17 +64,4 @@ void gpio_set_af(GPIO_Port *gpiox, uint8_t pin, uint8_t af_num)
         reg = gpiox->AFRH & (~(0x0f << ((pin - 8) * 4)));
         gpiox->AFRH = reg | (af_num << ((pin - 8) * 4));
     }
-}
-
-void gpio_enable_clock(GPIO_Port *gpiox)
-{
-    if (gpiox == GPIOA) RCC_AHB1_CLOCK_ER |= GPIOA_AHB1_CLOCK_ER_VAL;
-	else if (gpiox == GPIOB) RCC_AHB1_CLOCK_ER |= GPIOB_AHB1_CLOCK_ER_VAL;
-	else if (gpiox == GPIOC) RCC_AHB1_CLOCK_ER |= GPIOC_AHB1_CLOCK_ER_VAL;
-	else if (gpiox == GPIOD) RCC_AHB1_CLOCK_ER |= GPIOD_AHB1_CLOCK_ER_VAL;
-	else if (gpiox == GPIOE) RCC_AHB1_CLOCK_ER |= GPIOE_AHB1_CLOCK_ER_VAL;
-	else if (gpiox == GPIOF) RCC_AHB1_CLOCK_ER |= GPIOF_AHB1_CLOCK_ER_VAL;
-	else if (gpiox == GPIOG) RCC_AHB1_CLOCK_ER |= GPIOG_AHB1_CLOCK_ER_VAL;
-	else if (gpiox == GPIOH) RCC_AHB1_CLOCK_ER |= GPIOH_AHB1_CLOCK_ER_VAL;
-	else if (gpiox == GPIOI) RCC_AHB1_CLOCK_ER |= GPIOI_AHB1_CLOCK_ER_VAL;
 }
