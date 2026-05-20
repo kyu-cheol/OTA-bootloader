@@ -6,13 +6,6 @@
 
 #define AIRCR (*(volatile uint32_t *)0xE000ED0C)
 
-/*** FLASH ***/
-#define FLASH_BASE (0x40023C00)
-#define FLASH_ACR  (*(volatile uint32_t *)(FLASH_BASE + 0x00))
-#define FLASH_ACR_ENABLE_DATA_CACHE (1 << 10)
-#define FLASH_ACR_ENABLE_INST_CACHE (1 << 9)
-#define FLASH_ACR_ENABLE_PREFETCH   (1 << 8)
-
 /*** RCC ***/
 #define RCC_CR_PLLRDY               (1 << 25)
 #define RCC_CR_PLLON                (1 << 24)
@@ -41,11 +34,6 @@
 #define PLLP 2
 #define PLLQ 7
 #define PLLR 0
-
-void flash_init(void)
-{
-	FLASH_ACR |= 5 | FLASH_ACR_ENABLE_DATA_CACHE | FLASH_ACR_ENABLE_INST_CACHE | FLASH_ACR_ENABLE_PREFETCH;
-}
 
 void clock_config(void)
 {

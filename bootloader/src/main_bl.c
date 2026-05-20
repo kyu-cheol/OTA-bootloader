@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "system.h"
+#include "flash.h"
 #include "systick.h"
 #include "uart.h"
 #include "spi.h"
