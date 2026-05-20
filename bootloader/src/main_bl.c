@@ -25,7 +25,7 @@ void spi_ovr_handler(SPI_x *SPIx, uint8_t data);
 
 uint8_t spi_recv_cplt_flag;
 uint16_t spi_recv_idx;
-uint8_t buffer[1024];
+uint8_t buffer[1028];
 
 void main_bl(void)
 {
@@ -45,7 +45,7 @@ void main_bl(void)
 	
 		uart_write(UART3, "[INFO] Initializing SPI peripheral...\r\n");
 		
-		spi_init(SPI1, SPI_RECV_ONLY_SLAVE, 8);
+		spi_init(SPI1, SPI_RECV_ONLY_SLAVE, 8, 1);
 		spi_regist_rx_callback(spi_rx_handler);
 		spi_regist_ovr_callback(spi_ovr_handler);
 		
@@ -91,36 +91,45 @@ void jump_to_application(uint32_t app_address)
 
 void update_application(void)
 {
-	uart_write(UART3, "[OTA] Enter update_apllication.\r\n");
+	uint8_t is_last_packet = 0;
+
+	uart_write(UART3, "[OTA] Updating Application Binary Image...\r\n");
 
 	gpio_set_mode(GPIOD, 4, GPIO_MODE_OUTPUT);
 	gpio_set_ospeed(GPIOD, 4, GPIO_OSPEED_VH);
 	gpio_set_pupd(GPIOD, 4, GPIO_PUPD_NONE);
 
-	// 1. 버퍼 인덱스 0 초기화 후 수신가능 신호 전달
-	spi_recv_idx = 0;	
-	gpio_wrtie_pin(GPIOD, 4, 1);
+	while (!is_last_packet) {
+		// 1. 버퍼 인덱스 0 초기화 후 수신가능 신호 전달
+		spi_recv_idx = 0;	
+		gpio_wrtie_pin(GPIOD, 4, 1);
 
-	// 2. 1024 bytes 패킷 수신 후 버퍼에 저장
-	while (!spi_recv_cplt_flag) {
-		__asm__ volatile ("WFI");
+		// 2. 1024 bytes 패킷 수신 후 버퍼에 저장
+		while (!spi_recv_cplt_flag) {
+			__asm__ volatile ("WFI");
+		}
+
+		for (int i = 0; i < 1028; i++) {
+			printf("buffer[%d]: %d\r\n", i, buffer[i]);
+		}
+		printf("\r\n");
+
+		// 2.5. 필요한 데이터들 파싱 (패킷 번호, 마지막 패킷 여부, 유효 데이터 길이, CRC)
+		//		패킷 번호 			  -> 패킷 순서가 다를 경우 예외 처리
+		//		마지막 패킷 여부 데이터 -> 5번 루프 탈출조건
+		//		유효 데이터 길이 	   -> 4번 반복문 반복 횟수
+		//		CRC 				 -> 3번 무결성 검사에서 대조
+
+		// 3. 패킷 무결성 검사 (패킷 순서, CRC 검사 확인 후 필요하다면 패킷 재전송 요청)
+
+		// 4. 4 bytes 씩 최대 255번 flash에 write (flash write하는 동안 interrupt off)
+
+		// 5. 모든 바이너리를 flash에 쓸 동안 1 ~ 4 반복
+
+		// 1024 bytes 패킷을 flash에 쓸 때마다 ok 로그 메세지 출력
 	}
 
-	for (int i = 0; i < 1028; i++) {
-		printf("buffer[%d]: 0x%x\r\n", i, buffer[i]);
-	}
-
-	// 2.5. 필요한 데이터들 파싱 (패킷 번호, 마지막 패킷 여부, 유효 데이터 길이, CRC)
-	//		패킷 번호 			  -> 패킷 순서가 다를 경우 예외 처리
-	//		마지막 패킷 여부 데이터 -> 5번 루프 탈출조건
-	//		유효 데이터 길이 	   -> 4번 반복문 반복 횟수
-	//		CRC 				 -> 3번 무결성 검사에서 대조
-
-	// 3. 패킷 무결성 검사 (패킷 순서, CRC 검사 확인 후 필요하다면 패킷 재전송 요청)
-
-	// 4. 4 bytes 씩 255번 flash에 write (flash write하는 동안 interrupt off)
-
-	// 5. 모든 바이너리를 flash에 쓸 동안 1 ~ 4 반복
+	uart_write(UART3, "[OTA] Update Complete. (Total: %d Bytes / %d Packets)\r\n");
 }
 
 void crc_check_image(void)

@@ -52,7 +52,7 @@ typedef struct SPI_X {
 #define SPI_SR_BSY         (1 << 7)
 
 /* SPI interface prototypes */
-void spi_init(SPI_x *spi, uint8_t mode, uint8_t size);
+void spi_init(SPI_x *spi, uint8_t mode, uint8_t size, uint8_t use_it);
 void spi_write(SPI_x *spi, uint16_t data);
 void spi_read(SPI_x *spi, uint16_t *data);
 void spi_deinit(SPI_x *spi);

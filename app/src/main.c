@@ -30,7 +30,7 @@ void main(void) {
 	button_setup();
 	//uart_init(UART3, 115200);
 	
-	// spi_init(SPI1, SPI_RECV_ONLY_SLAVE, 8);
+	// spi_init(SPI1, SPI_RECV_ONLY_SLAVE, 8, 1);
 	// spi_regist_rx_callback(spi_rx_handler);
 	// spi_regist_ovr_callback(spi_ovr_handler);
 

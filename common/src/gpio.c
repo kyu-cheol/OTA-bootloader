@@ -10,6 +10,7 @@ void gpio_init(void)
                           GPIOI_AHB1_CLOCK_ER_VAL);
     
     // RCC 레지스터 동기화
+    // 해당 레지스터 값을 load 하여 peripheral write 동작이 완료되었음을 보장
     (void)RCC_AHB1_CLOCK_ER; 
 }
 

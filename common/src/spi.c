@@ -13,57 +13,61 @@
 void (*spi_rx_callback)(SPI_x *spi, uint8_t data) = 0;
 void (*spi_ovr_callback)(SPI_x *spi, uint8_t data) = 0;
 
-static void spi1_reset(void)
+static void spi_reset(SPI_x *spi)
 {
-    RCC_APB2_CLOCK_RST |= SPI1_APB2_CLOCK_ER_VAL;
-    __asm__ volatile ("DMB");
-    RCC_APB2_CLOCK_RST &= ~SPI1_APB2_CLOCK_ER_VAL;
+    if (spi == SPI1) {
+        RCC_APB2_CLOCK_RST |= SPI1_APB2_CLOCK_ER_VAL;
+        __asm__ volatile ("DMB");
+        RCC_APB2_CLOCK_RST &= ~SPI1_APB2_CLOCK_ER_VAL;
+    }
 }
 
-static void spi1_pins_setup(void)
+static void spi_pins_setup(SPI_x *spi)
 {
-    /* PA5, PA4 SPI AF gpio set */
-    gpio_set_mode(GPIOA, SPI1_SCK_PIN, GPIO_MODE_AF);
-    gpio_set_mode(GPIOA, SPI1_NSS_PIN, GPIO_MODE_AF);
+    if (spi == SPI1) {
+        /* PA5, PA4 SPI AF gpio set */
+        gpio_set_mode(GPIOA, SPI1_SCK_PIN, GPIO_MODE_AF);
+        gpio_set_mode(GPIOA, SPI1_NSS_PIN, GPIO_MODE_AF);
 
-    gpio_set_af(GPIOA, SPI1_SCK_PIN, SPI1_PIN_AF);
-    gpio_set_af(GPIOA, SPI1_NSS_PIN, SPI1_PIN_AF);
+        gpio_set_af(GPIOA, SPI1_SCK_PIN, SPI1_PIN_AF);
+        gpio_set_af(GPIOA, SPI1_NSS_PIN, SPI1_PIN_AF);
 
-    /* PB5, PB4 SPI AF gpio set */
-    gpio_set_mode(GPIOB, SPI1_MOSI_PIN, GPIO_MODE_AF);
-    gpio_set_mode(GPIOB, SPI1_MISO_PIN, GPIO_MODE_AF);
+        /* PB5, PB4 SPI AF gpio set */
+        gpio_set_mode(GPIOB, SPI1_MOSI_PIN, GPIO_MODE_AF);
+        gpio_set_mode(GPIOB, SPI1_MISO_PIN, GPIO_MODE_AF);
 
-    gpio_set_af(GPIOB, SPI1_MOSI_PIN, SPI1_PIN_AF);
-    gpio_set_af(GPIOB, SPI1_MISO_PIN, SPI1_PIN_AF);
+        gpio_set_af(GPIOB, SPI1_MOSI_PIN, SPI1_PIN_AF);
+        gpio_set_af(GPIOB, SPI1_MISO_PIN, SPI1_PIN_AF);
 
-    /* NSS pin pull-up */
-    gpio_set_pupd(GPIOA, SPI1_NSS_PIN, GPIO_PUPD_PU);
+        /* NSS pin pull-up */
+        gpio_set_pupd(GPIOA, SPI1_NSS_PIN, GPIO_PUPD_PU);
 
-    /* SPI pin 고속모드 설정 */
-    gpio_set_ospeed(GPIOA, SPI1_SCK_PIN, GPIO_OSPEED_VH);
-    gpio_set_ospeed(GPIOA, SPI1_NSS_PIN, GPIO_OSPEED_VH);
-    gpio_set_ospeed(GPIOB, SPI1_MOSI_PIN, GPIO_OSPEED_VH);
-    gpio_set_ospeed(GPIOB, SPI1_MISO_PIN, GPIO_OSPEED_VH);
+        /* SPI pin 고속모드 설정 */
+        gpio_set_ospeed(GPIOA, SPI1_SCK_PIN, GPIO_OSPEED_VH);
+        gpio_set_ospeed(GPIOA, SPI1_NSS_PIN, GPIO_OSPEED_VH);
+        gpio_set_ospeed(GPIOB, SPI1_MOSI_PIN, GPIO_OSPEED_VH);
+        gpio_set_ospeed(GPIOB, SPI1_MISO_PIN, GPIO_OSPEED_VH);
+
+        // SPI clock on
+        RCC_APB2_CLOCK_ER |= SPI1_APB2_CLOCK_ER_VAL;
+    }
 }
 
-void spi_init(SPI_x *spi, uint8_t mode, uint8_t size)
+void spi_init(SPI_x *spi, uint8_t mode, uint8_t size, uint8_t use_it)
 {
     uint32_t reg;
     volatile uint32_t dummy;
 
-    if (mode == SPI_RECV_ONLY_SLAVE) {
-        spi1_pins_setup();
+    spi_pins_setup(spi);
 
-        // SPI clock on
-        RCC_APB2_CLOCK_ER |= SPI1_APB2_CLOCK_ER_VAL;
+    // SPI reset
+    spi_reset(spi);
 
-        // SPI reset
-        spi1_reset();
-
-        // SPI off
-        reg = spi->CR1;
-        reg &= ~SPI_CR1_SPI_EN;
+    // SPI off
+    reg = spi->CR1;
+    reg &= ~SPI_CR1_SPI_EN;
         
+    if (mode == SPI_RECV_ONLY_SLAVE) {
         // set slave mode(MSTR)
         reg &= ~SPI_CR1_MASTER;
 
@@ -80,21 +84,27 @@ void spi_init(SPI_x *spi, uint8_t mode, uint8_t size)
         reg &= ~(1 << 9);
         spi->CR1 = reg;
 
-        // RXNEIE, ERRIE(OVR) set
-        reg = spi->CR2;
-        reg |= SPI_CR2_RXNEI_EN | SPI_CR2_ERRI_EN;
-
-        // reset SSOE
+        // reset SSOE (HW의 NSS 핀 출력 off)
         reg &= ~(1 << 2);
         spi->CR2 = reg;
 
-        // NVIC spi interrupt enable
-        nvic_irq_enable(NVIC_SPI1_IRQN);
-        nvic_irq_setprio(NVIC_SPI1_IRQN, 2);
+        if (use_it) {
+            // RXNEIE, ERRIE(OVR) set
+            reg = spi->CR2;
+            reg |= SPI_CR2_RXNEI_EN | SPI_CR2_ERRI_EN;
 
-        // SPI on
-        spi->CR1 |= SPI_CR1_SPI_EN;
+            // NVIC spi interrupt enable
+            nvic_irq_enable(NVIC_SPI1_IRQN);
+            nvic_irq_setprio(NVIC_SPI1_IRQN, 2);
+        }
     }
+    
+    if (mode == SPI_FULL_DUP_MASTER) {
+        ;
+    }
+
+    // SPI on
+    spi->CR1 |= SPI_CR1_SPI_EN;
 
     dummy= spi->DR;
     (void)dummy;
@@ -130,10 +140,12 @@ void spi_deinit(SPI_x *spi)
     while (spi->SR & SPI_SR_BSY);
 
     // SPI reset
-    spi1_reset();
+    spi_reset(spi);
 
     // SPI clock off
-    RCC_APB2_CLOCK_ER &= ~SPI1_APB2_CLOCK_ER_VAL;
+    if (spi == SPI1) {
+        RCC_APB2_CLOCK_ER &= ~SPI1_APB2_CLOCK_ER_VAL;
+    }
 
     // NVIC disable irq
     nvic_irq_disable(NVIC_SPI1_IRQN);
