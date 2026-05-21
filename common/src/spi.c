@@ -64,11 +64,11 @@ void spi_init(SPI_x *spi, uint8_t mode, uint8_t size, uint8_t use_it)
     spi_reset(spi);
 
     // SPI off
-    reg = spi->CR1;
-    reg &= ~SPI_CR1_SPI_EN;
+    spi->CR1 &= ~SPI_CR1_SPI_EN;
         
     if (mode == SPI_RECV_ONLY_SLAVE) {
         // set slave mode(MSTR)
+        reg = spi->CR1;
         reg &= ~SPI_CR1_MASTER;
 
         // set CPOL/CPHA
@@ -85,13 +85,11 @@ void spi_init(SPI_x *spi, uint8_t mode, uint8_t size, uint8_t use_it)
         spi->CR1 = reg;
 
         // reset SSOE (HW의 NSS 핀 출력 off)
-        reg &= ~(1 << 2);
-        spi->CR2 = reg;
+        spi->CR2 &= ~(1 << 2);
 
         if (use_it) {
             // RXNEIE, ERRIE(OVR) set
-            reg = spi->CR2;
-            reg |= SPI_CR2_RXNEI_EN | SPI_CR2_ERRI_EN;
+            spi->CR2 |= SPI_CR2_RXNEI_EN | SPI_CR2_ERRI_EN;
 
             // NVIC spi interrupt enable
             nvic_irq_enable(NVIC_SPI1_IRQN);
@@ -106,6 +104,7 @@ void spi_init(SPI_x *spi, uint8_t mode, uint8_t size, uint8_t use_it)
     // SPI on
     spi->CR1 |= SPI_CR1_SPI_EN;
 
+    // Clean data register
     dummy= spi->DR;
     (void)dummy;
 }

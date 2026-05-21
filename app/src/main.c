@@ -9,6 +9,7 @@
 #include "uart.h"
 #include "button.h"
 #include "spi.h"
+#include "flash.h"
 
 extern uint32_t ticks;
 extern uint8_t timer_flag;
@@ -43,7 +44,6 @@ void main(void) {
 	//timer_start_IT(TIM2);	// 0.5s timer
 	timer_start_PWM(TIM2, 2, GPIOA, 1, 500);
 	
-
 	while (1) {
 		// if (timer_flag) {
 		// 	timer_flag = 0;
