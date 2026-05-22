@@ -26,7 +26,7 @@ void spi_ovr_handler(SPI_x *SPIx, uint8_t data);
 
 volatile uint8_t spi_recv_cplt_flag;
 volatile uint16_t spi_recv_idx;
-uint8_t spi_recv_buf[1028];			// parsing전 spi 수신 버퍼
+uint8_t spi_recv_buf[1024];			// parsing전 spi 수신 버퍼
 
 void main_bl(void)
 {
@@ -99,7 +99,14 @@ void update_application(uint32_t app_address)
 {
 	uint8_t is_last_packet = 0;
 	uint8_t flash_write_num;
+	uint8_t parsed_packet_num;
+	uint16_t parsed_packet_crc;
+	uint16_t flash_packet_header;
 	static uint32_t flash_payload_buf[255] = { 0, };	// flash에 write할 바이너리 데이터 버퍼
+
+	uint32_t current_flash_addr = app_address; 
+    uint32_t total_received_bytes = 0;
+    uint16_t total_packets = 0;
 
 	uart_write(UART3, "[OTA] Updating Application Binary Image...\r\n");
 
@@ -109,9 +116,9 @@ void update_application(uint32_t app_address)
 
 	// Application flash sector erase (0x0801 0000)
 	flash_unlock();
-	if (flash_erase(4) < 0) {
-		uart_write(UART3, "[error] Flash Erase Failed.\r\n");
-	}
+	// if (flash_erase(4) < 0) {
+	// 	uart_write(UART3, "[error] Flash Erase Failed.\r\n");
+	// }
 
 	while (!is_last_packet) {
 		// 1. 버퍼 인덱스 0 초기화 후 수신가능 신호 전달
@@ -125,7 +132,7 @@ void update_application(uint32_t app_address)
 			__asm__ volatile ("WFI");
 		}
 
-		for (int i = 0; i < 1028; i++) {
+		for (int i = 0; i < 1024; i++) {
 			printf("buffer[%d]: %d\r\n", i, spi_recv_buf[i]);
 		}
 		printf("\r\n");
@@ -135,18 +142,35 @@ void update_application(uint32_t app_address)
 		//		마지막 패킷 여부 데이터 -> 5번 루프 탈출조건
 		//		유효 데이터 길이 	   -> 4번 반복문 반복 횟수 (flash_write_num)
 		//		CRC 				 -> 3번 무결성 검사에서 대조
+		flash_packet_header = (uint16_t)((spi_recv_buf[0] << 8) | spi_recv_buf[1]);
+		parsed_packet_num = (uint8_t)((flash_packet_header & (0x3F << 10)) >> 10);
+		is_last_packet = (uint8_t)((flash_packet_header & (1 << 8)) >> 8);
+		flash_write_num = (uint8_t)(flash_packet_header & (0xFF));
+		printf("%d %d %d %x\r\n", parsed_packet_num, is_last_packet, flash_write_num, parsed_packet_crc);
 
+		// 8bit 배열을 32bit pointer로 casting
+		volatile uint32_t *raw_payload_32 = (volatile uint32_t *)&spi_recv_buf[2];
+
+		for (int i= 0; i < flash_write_num; i++) {
+			flash_payload_buf[i] = raw_payload_32[i];
+		}
+
+		parsed_packet_crc = (uint16_t)((spi_recv_buf[1022] << 8) | spi_recv_buf[1023]);
 
 		// 3. 패킷 무결성 검사 (패킷 순서, CRC 검사 확인 후 필요하다면 패킷 재전송 요청)
 
 		// 4. 4 bytes 씩 최대 255번 flash에 write (flash write하는 동안 interrupt off)
 		__asm__ volatile ("cpsid i");
 
-		for (uint8_t i = 0; i < flash_write_num; i++) {
-			flash_write_word(app_address + (4 * i), flash_payload_buf[i]);
-		}
+		// for (uint8_t i = 0; i < flash_write_num; i++) {
+		// 	flash_write_word(current_flash_addr + (4 * i), flash_payload_buf[i]);
+		// }
 
 		__asm__ volatile ("cpsie i");
+
+		current_flash_addr += (flash_write_num * 4);
+		total_received_bytes += (flash_write_num * 4);
+		total_packets++;
 
 		// 5. 모든 바이너리를 flash에 쓸 동안 1 ~ 4 반복
 
@@ -154,7 +178,7 @@ void update_application(uint32_t app_address)
 	}
 
 	flash_lock();
-	uart_write(UART3, "[OTA] Update Complete. (Total: %d Bytes / %d Packets)\r\n");
+	printf("[OTA] Update Complete. (Total: %ld Bytes / %d Packets)\r\n", total_received_bytes, total_packets);
 }
 
 void crc_check_image(void)
@@ -173,7 +197,7 @@ void spi_rx_handler(SPI_x *SPIx, uint8_t data)
 			gpio_wrtie_pin(GPIOD, 4, 0);
 		}
 
-		if (spi_recv_idx < 1028) {
+		if (spi_recv_idx < 1024) {
 			spi_recv_buf[spi_recv_idx++] = data;
 		}
 
