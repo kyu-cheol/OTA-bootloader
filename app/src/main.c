@@ -40,6 +40,7 @@ void main(void) {
 	uart_write(UART3, "=============================\r\n\r\n");
 
 	printf("\x1b[33m[APP ]\x1b[0m hello world\r\n");
+	printf("firmware version : 1\r\n");
 
 	//timer_start_IT(TIM2);	// 0.5s timer
 	timer_start_PWM(TIM2, 2, GPIOA, 1, 500);

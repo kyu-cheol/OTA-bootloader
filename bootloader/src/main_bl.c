@@ -40,7 +40,7 @@ void main_bl(void)
 	uint32_t reg = RCC_CSR;
 	RCC_CSR |= RCC_CSR_RMVF;	// remove reset flag
 
-	LOG_BOOT("STM32F407 Bootloader v1.0.0 Built: May 16 2026");
+	LOG_BOOT("\r\n\r\nSTM32F407 Bootloader v1.0.0 Built: May 16 2026");
 
 	if (reg & RCC_CSR_SFTRSTF) {
 		LOG_BOOT("Reset Reason: Software Reset\r\n");
@@ -66,10 +66,10 @@ void main_bl(void)
 		spi_deinit(SPI1);
 	}
 	else if (reg & RCC_CSR_PINRSTF) {
-		uart_write(UART3, "[INFO] Reset Reason: Normal Reset\r\n");
+		LOG_BOOT("Reset Reason: Normal Reset\r\n");
 	}
 	else {
-		uart_write(UART3, "[INFO] Reset Reason: Else\r\n");
+		LOG_BOOT("Reset Reason: Else\r\n");
 	}
 
 	LOG_INFO("Disabling bootloader peripherals...");
@@ -97,9 +97,24 @@ void jump_to_application(uint32_t app_address)
     __asm__ volatile ("mov pc, %0"  :: "r"(app_entry));
 }
 
+uint16_t calculate_crc16(const uint8_t *data, uint32_t length) {
+    uint16_t crc = 0xFFFF;
+    for (uint32_t i = 0; i < length; i++) {
+        crc ^= data[i];
+        for (int j = 0; j < 8; j++) {
+            if (crc & 0x0001) {
+                crc = (uint16_t)((crc >> 1) ^ 0xA001);
+            } else {
+                crc >>= 1;
+            }
+        }
+    }
+    return crc;
+}
+
 void update_application(uint32_t app_address)
 {
-	uint8_t is_last_packet = 0, prev_packet_num = 0, packet_cnt = 0;
+	uint8_t is_last_packet = 0, prev_packet_num = 63, packet_cnt = 0;
 	uint8_t flash_write_num;
 	uint8_t parsed_packet_num;
 	uint16_t parsed_packet_crc;
@@ -120,9 +135,9 @@ void update_application(uint32_t app_address)
 	flash_unlock();
 	LOG_OK("Flash unlocked.");
 
-	// if (flash_erase(4) < 0) {
-	// 	LOG_ERROR("Flash Erase Failed.");
-	// }
+	if (flash_erase(4) < 0) {
+		LOG_ERROR("Flash Erase Failed.");
+	}
 	LOG_OK("Flash sector 4 erased.\r\n");
 
 	while (!is_last_packet) {
@@ -136,11 +151,6 @@ void update_application(uint32_t app_address)
 		while (!spi_recv_cplt_flag) {
 			__asm__ volatile ("WFI");
 		}
-
-		// for (int i = 0; i < 1024; i++) {
-		// 	printf("buffer[%d]: %d\r\n", i, spi_recv_buf[i]);
-		// }
-		// printf("\r\n");
 
 		// 2.5. 필요한 데이터들 파싱 (패킷 번호, 마지막 패킷 여부, 유효 데이터 길이, CRC)
 		//		패킷 번호 			  -> 패킷 순서가 다를 경우 예외 처리 (1부터 시작)
@@ -159,33 +169,40 @@ void update_application(uint32_t app_address)
 			flash_payload_buf[i] = raw_payload_32[i];
 		}
 
-		parsed_packet_crc = (uint16_t)((spi_recv_buf[1022] << 8) | spi_recv_buf[1023]);
+		// for (int i = 0; i < flash_write_num; i++) {
+		// 	printf("packet %d: %lx\r\n", i, flash_payload_buf[i]);
+		// }
+		// printf("\r\n");
 
-		printf("%d %d %d %x\r\n", parsed_packet_num, is_last_packet, flash_write_num, parsed_packet_crc);
+		parsed_packet_crc = *(uint16_t *)&spi_recv_buf[1022];
+		//parsed_packet_crc = (uint16_t)((spi_recv_buf[1022] << 8) | spi_recv_buf[1023]);
+
+		//printf("%d %d %d %x\r\n", parsed_packet_num, is_last_packet, flash_write_num, parsed_packet_crc);
 
 		// 3. 패킷 무결성 검사 (패킷 순서, CRC 검사 확인 후 필요하다면 패킷 재전송 요청)
-		// if (parsed_packet_num == (prev_packet_num + 1) % 64) {
-		// 	prev_packet_num = parsed_packet_num;
-		// }
-		// else {
-		// 	uart_write(UART3, "[ERROR] Packet Unordered Error.\r\n");
-		// 	while (1);
-		// }
+		if (parsed_packet_num == (prev_packet_num + 1) % 64) {
+			prev_packet_num = parsed_packet_num;
+		}
+		else {
+			uart_write(UART3, "[ERROR] Packet Unordered Error.\r\n");
+			while (1);
+		}
 
-		// if (parsed_packet_crc == calculate_crc16(flash_payload_buf)) {
-		// 	printf("[ OK ] %d Packet CRC Verification success! Packet is valid.\r\n", ++packet_cnt);
-		// }
-		// else {
-		// 	uart_write(UART3, "[ERROR] Packet CRC Verification failed.\r\n");
-		// 	while (1);
-		// }
+		if (parsed_packet_crc == calculate_crc16(spi_recv_buf, 1022)) {
+			printf("[ OK ] %d Packet CRC Verification success! Packet is valid.\r\n", ++packet_cnt);
+		}
+		else {
+			uart_write(UART3, "[ERROR] Packet CRC Verification failed.\r\n");
+			printf("<%d %d>\r\n", parsed_packet_crc, calculate_crc16(spi_recv_buf, 1022));
+			while (1);
+		}
 
 		// 4. 4 bytes 씩 최대 255번 flash에 write (flash write하는 동안 interrupt off)
 		__asm__ volatile ("cpsid i");
 
-		// for (uint8_t i = 0; i < flash_write_num; i++) {
-		// 	flash_write_word(current_flash_addr + (4 * i), flash_payload_buf[i]);
-		// }
+		for (uint8_t i = 0; i < flash_write_num; i++) {
+			flash_write_word(current_flash_addr + (4 * i), flash_payload_buf[i]);
+		}
 
 		__asm__ volatile ("cpsie i");
 
